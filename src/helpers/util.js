@@ -1,11 +1,7 @@
 /**
- * @file Utility functions for plugin.js.
+ * @file Utility functions for the PubNub powered WebRTC Phone.
  * @author Adam Bavosa <ajb413>
  */
-
-const peerIceCandidateEvent = ['$' + 'webRTC', 'peerIceCandidate'].join('.');
-const incomingCallEvent = ['$' + 'webRTC', 'incomingCall'].join('.');
-const callResponseEvent = ['$' + 'webRTC', 'callResponse'].join('.');
 
 /**
  * Makes a new, version 4, universally unique identifier (UUID). Written by
@@ -75,14 +71,64 @@ function request(url, method, options) {
     });
 }
 
-const eventNames = {
-    peerIceCandidateEvent,
-    incomingCallEvent,
-    callResponseEvent
+/**
+ * Helper function that validates the WebRtcPhone constructor init parameters.
+ *
+ * @param {Object} config Contains PubNub object and event handlers for a 
+ *     WebRTC call's lifecycle.
+ *
+ * @return {Boolean} Returns `true` if valid or false if a config parameter is
+ *     missing.
+ */
+function isValidConstructorConfig(config) {
+    const functionName = 'isValidConstructorConfig';
+    let isValid = true;
+
+    if (!config.pubnub) {
+        const message = `WebRTC [${functionName}] error. ` +
+            'Cannot initialize [WebRtcPhone] without passing an instance of ' +
+            'the PubNub JS SDK.';
+        console.error(message);
+        isValid = false;
+    }
+
+    if (!config.onIncomingCall) {
+        const message = `WebRTC [${functionName}] error. ` +
+            'Cannot initialize [WebRtcPhone] without passing a handler for ' +
+            'the [onIncomingCall] event.';
+        console.error(message);
+        isValid = false;
+    }
+
+    if (!config.onCallResponse) {
+        const message = `WebRTC [${functionName}] error. ` +
+            'Cannot initialize [WebRtcPhone] without passing a handler for ' +
+            'the [onCallResponse] event.';
+        console.error(message);
+        isValid = false;
+    }
+
+    if (!config.onPeerStream) {
+        const message = `WebRTC [${functionName}] error. ` +
+            'Cannot initialize [WebRtcPhone] without passing a handler for ' +
+            'the [onPeerStream] event.';
+        console.error(message);
+        isValid = false;
+    }
+
+    if (!config.onDisconnect) {
+        const message = `WebRTC [${functionName}] error. ` +
+            'Cannot initialize [WebRtcPhone] without passing a handler for ' +
+            'the [onDisconnect] event.';
+        console.error(message);
+        isValid = false;
+    }
+
+    return isValid;
 }
 
 module.exports = {
     newUuid,
     request,
-    eventNames,
+    isValidConstructorConfig
 };

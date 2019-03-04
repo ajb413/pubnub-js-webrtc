@@ -4,89 +4,63 @@
  */
 
 import {
-    onIncomingCallNotDefined,
-    onCallResponseNotDefined,
-    onPeerStreamNotDefined,
-    onDisconnectNotDefined
-} from './helpers/error-handlers.js';
-
-import {
     newUuid,
-    eventNames
+    isValidConstructorConfig
 } from './helpers/util.js';
 
-const incomingCallEvent = eventNames.incomingCallEvent;
-const callResponseEvent = eventNames.callResponseEvent;
-const peerIceCandidateEvent = eventNames.peerIceCandidateEvent;
-let config;
+const peerIceCandidateEvent = ['$' + 'webRTC', 'peerIceCandidate'].join('.');
+const incomingCallEvent = ['$' + 'webRTC', 'incomingCall'].join('.');
+const callResponseEvent = ['$' + 'webRTC', 'callResponse'].join('.');
 
 /*
- * WebRtcPhone has a `construct` method instead of a conventional `constructor`
- *     method. This is called from within ChatEngine during the plugin init
- *     process. The class extends a ChatEngine type based on the module export's
- *     `extends`. This plugin extends only the instance of the `Me` object in
- *     the ChatEngine instance.
- *
  * @class
- * @classdesc WebRtcPhone can extend any ChatEngine class type and it should be
- *     used as a singleton. By default, it extends the `Me` instance of a
- *     ChatEngine instance using the `plugin` method for initialization. It 
- *     exposes a `callUser` and a `disconnect` method. The instance encapsulates
- *     all the necessary logic and events for orchestrating a WebRTC connection.
- *     The class attempts a peer to peer connection at first. It can fallback to
- *     a TURN connection if server information is provided in the configuration.
- *     All of the WebRTC signaling is done using ChatEngine `direct` events. For
- *     this reason using `on` methods from the parent are not encouraged, so
- *     event handlers like `onIncomingCall`, `onCallResponse`, `onPeerStream`,
- *     and `onDisconnect` need to be passed to ` the class instance. Errors are
- *     logged using `ChatEngine.throwError`.
+ * @classdesc WebRtcPhone uses PubNub to make WebRTC audio and or video calls.
+ *     It must be initialized with 4 event handlers and a PubNub JS SDK 
+ *     object instance. It works with 1 to 1 calls over STUN or TURN. It
+ *     provides 2 public methods. One for calling a user, and one for 
+ *     disconnecting from a call.
  */
 class WebRtcPhone {
     /*
-     * Construct is a method called from ChatEngine during the plugin
-     *     initialization process. It extends the object that `plugin` is called
-     *     on.
+     * The `constructor` is a method called when initializing a instance of the 
+     *     class. A `config` object must be provided to the constructor.
      *
+     * @param {object} [pubnub] Instance object of the PubNub JavaScript SDK.
+     *     PubNub pub/sub API handles all signaling for WebRTC calls.
      * @param {function} [onIncomingCall] Function passed from the parent that
-     *     executes when a `direct` event fires for an incoming WebRTC call. If
-     *     a handler is not passed in the plugin configuration, an error will be
-     *     thrown every time the event fires.
+     *     executes when an `incomingCallEvent` event fires for an incoming
+     *     WebRTC call. If a handler is not passed in the `config`, the object 
+     *     initialization will fail.
      * @param {function} [onCallResponse] Function passed from the parent that
-     *     executes when a `direct` event fires for a call reply. If a handler
-     *     is not passed in the plugin configuration, an error will be thrown
-     *     every time the event fires.
+     *     executes when a `callResponseEvent` event fires. This is when the 
+     *     peer replies with their response to a call request. If a handler is 
+     *     not passed in the `config`, the object initialization will fail.
      * @param {function} [onPeerStream] Function passed from the parent that
      *     executes when a the peer's stream object becomes available. If a
-     *     handler is not passed in the plugin configuration, an error will be
-     *     thrown every time the event fires.
+     *     handler is not passed in the `config`, the object initialization 
+     *     will fail.
      * @param {function} [onDisconnect] Function passed from the parent that
      *     executes when a user in the call disconnects. If a handler is not
-     *     passed in the plugin configuration, an error will be thrown every
-     *     time the event fires.
-     * @param {object} [myStream] A browser `MediaStream` object of the local
+     *     passed in the `config`, the object initialization will fail.
+     * @param {object=} [myStream] A browser `MediaStream` object of the local
      *     client audio and/or video.
-     * @param {object} [rtcConfig] An `RTCConfiguration` dictionary that is used
-     *     to initialize the `RTCPeerConnection`. This is where STUN and TURN
-     *     server information should be provided.
+     * @param {object=} [rtcConfig] An `RTCConfiguration` dictionary that is 
+     *     usedto initialize the `RTCPeerConnection`. This is where STUN and 
+     *     TURN server information should be provided.
      * @param {boolean} [ignoreNonTurn] If true, this will force the ICE
      *     candidate registration to ignore all candidates that are not TURN 
      *     servers.
      *
-     * @returns {void}
+     * @returns {object} Returns an instance of the `WebRtcPhone` class.
      */
     constructor(config) {
-        if (!config.pubnub) {
-            const message = `WebRTC [constructor] error. ` +
-                'Cannot initialize without passing a PubNub SDK instance object';
-            console.error(message);
-            return;
-        }
+        if (!isValidConstructorConfig(config)) return;
 
-        this.pubnub = config.pubnub; // this.pubnub.getUUID();
-        this.onIncomingCall = config.onIncomingCall || onIncomingCallNotDefined;
-        this.onCallResponse = config.onCallResponse || onCallResponseNotDefined;
-        this.onPeerStream = config.onPeerStream || onPeerStreamNotDefined;
-        this.onDisconnect = config.onDisconnect || onDisconnectNotDefined;
+        this.pubnub = config.pubnub;
+        this.onIncomingCall = config.onIncomingCall;
+        this.onCallResponse = config.onCallResponse;
+        this.onPeerStream = config.onPeerStream;
+        this.onDisconnect = config.onDisconnect;
         this.myStream = config.myStream;
         this.rtcConfig = config.rtcConfig;
         this.ignoreNonTurn = config.ignoreNonTurn;
@@ -131,11 +105,11 @@ class WebRtcPhone {
     }
 
     /*
-     * Initialize a WebRTC call with another ChatEngine user that is online.
+     * Initialize a WebRTC call with another user in the app that is online.
      *     This is called from parent.
      *
-     * @param {object} user ChatEngine user object of the user this client
-     *     intends to call.
+     * @param {string} userUuid PubNub UUID of the user in which this client is 
+     *     attempting to call.
      * @param {object} object
      * @param {function} object.onPeerStream Event handler for when a peer's
      *     stream becomes available. This will overwrite a handler that was
@@ -151,7 +125,7 @@ class WebRtcPhone {
      *
      * @returns {void}
      */
-    callUser(user, { onPeerStream, myStream, offerOptions, rtcConfig }) {
+    callUser(userUuid, { onPeerStream, myStream, offerOptions, rtcConfig }) {
         const myUuid = this.pubnub.getUUID();
         rtcConfig = this.rtcConfig = rtcConfig || this.rtcConfig;
         myStream = this.myStream = myStream || this.myStream;
@@ -181,7 +155,7 @@ class WebRtcPhone {
             if (!iceEvent.candidate) {
                 return;
             }
-            onIceCandidate(iceEvent, user, peerConnection, callId, this.pubnub);
+            onIceCandidate(iceEvent, userUuid, peerConnection, callId, this.pubnub);
         };
 
         peerConnection.onnegotiationneeded = () => {
@@ -190,7 +164,7 @@ class WebRtcPhone {
                 localDescription = description;
                 return peerConnection.setLocalDescription(localDescription);
             }).then(() => {
-                const channel = [incomingCallEvent, user].join('.');
+                const channel = [incomingCallEvent, userUuid].join('.');
                 this.pubnub.publish({
                     channel,
                     message: {
@@ -227,10 +201,16 @@ class WebRtcPhone {
 
 /*
  * This event fires when the call peer has indicated whether they will accept or
- *     reject an incoming call. The trigger is a ChatEngine `direct` event in
+ *     reject an incoming call. The trigger is an arriving PubNub message in
  *     the WebRtcPhone class.
  *
- * @param {object} payload A ChatEngine `direct` event payload.
+ * @param {object} object.
+ * @param {string} sender PubNub UUID of the user that sent the message.
+ * @param {string} callId UUID of the call.
+ * @param {boolean} acceptedCall Indicates the user's acceptance or rejection 
+ *     of the proposed call.
+ * @param {string} remoteDescription The local description of the sender for 
+ *     the WebRTC call.
  *
  * @returns {void}
  */
@@ -255,13 +235,20 @@ function callResponse({ sender, callId, acceptedCall, remoteDescription }) {
 
 /*
  * This event fires when a call peer has attempted to initiate a call. The
- *      trigger is a ChatEngine `direct` event in the WebRtcPhone class.
+ *      trigger is a PubNub message event in the WebRtcPhone class.
  *
- * @param {object} payload A ChatEngine `direct` event payload.
+ * @param {object} object.
+ * @param {string} sender PubNub UUID of the user that sent the message.
+ * @param {string} callId UUID of the call.
+ * @param {Object} rtcConfig An `RTCConfiguration` dictionary that is 
+ *     usedto initialize the `RTCPeerConnection`. This is where STUN and 
+ *     TURN server information should be provided.
+ * @param {string} remoteDescription The local description of the sender for 
+ *     the WebRTC call.
  *
  * @returns {void}
  */
-function incomingCall({sender, callId, rtcConfig, remoteDescription}) {
+function incomingCall({ sender, callId, rtcConfig, remoteDescription }) {
     // Is executed after this client accepts or rejects an incoming call, which
     // is typically done in their UI.
     const callResponseCallback = (params) => {
@@ -346,32 +333,33 @@ function incomingCall({sender, callId, rtcConfig, remoteDescription}) {
  *     candidate.
  *
  * @param {object} iceEvent A `RTCPeerConnectionIceEvent` for the local client.
- * @param {object} user A ChatEngine user object for the peer to send the ICE
+ * @param {string} userUuid A PubNub UUID for the peer to send the ICE
  *     candidate to.
  * @param {object} peerConnection The local `RTCPeerConnection` object.
  * @param {string} callId A UUID for the unique call.
  *
  * @returns {void}
  */
-function onIceCandidate(iceEvent, user, peerConnection, callId, pubnub) {
+function onIceCandidate(iceEvent, userUuid, peerConnection, callId, pubnub) {
     peerConnection.iceCache.push(iceEvent.candidate);
     if (peerConnection.acceptedCall) {
-        sendIceCandidates(user, peerConnection, callId, pubnub);
+        sendIceCandidates(userUuid, peerConnection, callId, pubnub);
     }
 }
 
 /*
  * This sends an array of ICE candidates
  *
- * @param {object} user A ChatEngine user object for the peer to send the ICE
+ * @param {string} userUuid A PubNub UUID for the peer to send the ICE
  *     candidate to.
  * @param {object} peerConnection The local `RTCPeerConnection` object.
  * @param {string} callId A UUID for the unique call.
+ * @param {object} pubnub Instance object of the PubNub JavaScript SDK.
  *
  * @returns {void}
  */
-function sendIceCandidates(user, peerConnection, callId, pubnub) {
-    const channel = [peerIceCandidateEvent, user].join('.');
+function sendIceCandidates(userUuid, peerConnection, callId, pubnub) {
+    const channel = [peerIceCandidateEvent, userUuid].join('.');
     pubnub.publish({
         channel,
         message:  {
@@ -388,7 +376,8 @@ function sendIceCandidates(user, peerConnection, callId, pubnub) {
  * This event fires when the peer WebRTC client sends a new ICE candidate. This
  *     event registers the candidate with the local `RTCPeerConnection` object.
  *
- * @param {object} payload A ChatEngine `direct` event payload.
+ * @param {object} payload A PubNub message with WebRTC connection information 
+ *     for a call.
  *
  * @returns {void}
  */

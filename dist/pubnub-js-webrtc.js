@@ -1,54 +1,6 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
-function onIncomingCallNotDefined(callback) {
-  var functionName = 'onIncomingCallNotDefined';
-  var message = 'A handler for the [onIncomingCall] event is not defined.';
-  chatEngineError(this.ChatEngine, functionName, message);
-  callback(false);
-}
-
-function onCallResponseNotDefined() {
-  var functionName = 'onCallResponseNotDefined';
-  var message = 'A handler for the [onCallResponse] event is not defined.';
-  chatEngineError(this.ChatEngine, functionName, message);
-}
-
-function onPeerStreamNotDefined() {
-  var functionName = 'onPeerStreamNotDefined';
-  var message = 'A handler for the [onPeerStream] event is not defined.';
-  chatEngineError(this.ChatEngine, functionName, message);
-}
-
-function onDisconnectNotDefined() {
-  var functionName = 'onDisconnectNotDefined';
-  var message = 'A handler for the [onDisconnect] event is not defined.';
-  chatEngineError(this.ChatEngine, functionName, message);
-}
-
-function chatEngineError(chatEngine, functionName, message, error) {
-  message = 'ChatEngine WebRTC Plugin: ' + (message || 'undefined error');
-  error = error ? error : message;
-  chatEngine.throwError(chatEngine, functionName, 'webRTC', new Error(message), {
-    error: error
-  });
-}
-
-module.exports = {
-  onIncomingCallNotDefined: onIncomingCallNotDefined,
-  onCallResponseNotDefined: onCallResponseNotDefined,
-  onPeerStreamNotDefined: onPeerStreamNotDefined,
-  onDisconnectNotDefined: onDisconnectNotDefined,
-  chatEngineError: chatEngineError
-};
-
-},{}],2:[function(require,module,exports){
-"use strict";
-
-var peerIceCandidateEvent = ['$' + 'webRTC', 'peerIceCandidate'].join('.');
-var incomingCallEvent = ['$' + 'webRTC', 'incomingCall'].join('.');
-var callResponseEvent = ['$' + 'webRTC', 'callResponse'].join('.');
-
 function newUuid() {
   return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, function (c) {
     return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
@@ -97,23 +49,57 @@ function request(url, method, options) {
   });
 }
 
-var eventNames = {
-  peerIceCandidateEvent: peerIceCandidateEvent,
-  incomingCallEvent: incomingCallEvent,
-  callResponseEvent: callResponseEvent
-};
+function isValidConstructorConfig(config) {
+  var functionName = 'isValidConstructorConfig';
+  var isValid = true;
+
+  if (!config.pubnub) {
+    var message = "WebRTC [".concat(functionName, "] error. ") + 'Cannot initialize [WebRtcPhone] without passing an instance of ' + 'the PubNub JS SDK.';
+    console.error(message);
+    isValid = false;
+  }
+
+  if (!config.onIncomingCall) {
+    var _message = "WebRTC [".concat(functionName, "] error. ") + 'Cannot initialize [WebRtcPhone] without passing a handler for ' + 'the [onIncomingCall] event.';
+
+    console.error(_message);
+    isValid = false;
+  }
+
+  if (!config.onCallResponse) {
+    var _message2 = "WebRTC [".concat(functionName, "] error. ") + 'Cannot initialize [WebRtcPhone] without passing a handler for ' + 'the [onCallResponse] event.';
+
+    console.error(_message2);
+    isValid = false;
+  }
+
+  if (!config.onPeerStream) {
+    var _message3 = "WebRTC [".concat(functionName, "] error. ") + 'Cannot initialize [WebRtcPhone] without passing a handler for ' + 'the [onPeerStream] event.';
+
+    console.error(_message3);
+    isValid = false;
+  }
+
+  if (!config.onDisconnect) {
+    var _message4 = "WebRTC [".concat(functionName, "] error. ") + 'Cannot initialize [WebRtcPhone] without passing a handler for ' + 'the [onDisconnect] event.';
+
+    console.error(_message4);
+    isValid = false;
+  }
+
+  return isValid;
+}
+
 module.exports = {
   newUuid: newUuid,
   request: request,
-  eventNames: eventNames
+  isValidConstructorConfig: isValidConstructorConfig
 };
 
-},{}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 "use strict";
 
 function _typeof2(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof2 = function _typeof2(obj) { return typeof obj; }; } else { _typeof2 = function _typeof2(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof2(obj); }
-
-var _errorHandlers = require("./helpers/error-handlers.js");
 
 var _util = require("./helpers/util.js");
 
@@ -153,10 +139,9 @@ function _createClass(Constructor, protoProps, staticProps) {
   return Constructor;
 }
 
-var incomingCallEvent = _util.eventNames.incomingCallEvent;
-var callResponseEvent = _util.eventNames.callResponseEvent;
-var peerIceCandidateEvent = _util.eventNames.peerIceCandidateEvent;
-var config;
+var peerIceCandidateEvent = ['$' + 'webRTC', 'peerIceCandidate'].join('.');
+var incomingCallEvent = ['$' + 'webRTC', 'incomingCall'].join('.');
+var callResponseEvent = ['$' + 'webRTC', 'callResponse'].join('.');
 
 var WebRtcPhone = function () {
   function WebRtcPhone(config) {
@@ -164,17 +149,12 @@ var WebRtcPhone = function () {
 
     _classCallCheck(this, WebRtcPhone);
 
-    if (!config.pubnub) {
-      var message = "WebRTC [constructor] error. " + 'Cannot initialize without passing a PubNub SDK instance object';
-      console.error(message);
-      return;
-    }
-
+    if (!(0, _util.isValidConstructorConfig)(config)) return;
     this.pubnub = config.pubnub;
-    this.onIncomingCall = config.onIncomingCall || _errorHandlers.onIncomingCallNotDefined;
-    this.onCallResponse = config.onCallResponse || _errorHandlers.onCallResponseNotDefined;
-    this.onPeerStream = config.onPeerStream || _errorHandlers.onPeerStreamNotDefined;
-    this.onDisconnect = config.onDisconnect || _errorHandlers.onDisconnectNotDefined;
+    this.onIncomingCall = config.onIncomingCall;
+    this.onCallResponse = config.onCallResponse;
+    this.onPeerStream = config.onPeerStream;
+    this.onDisconnect = config.onDisconnect;
     this.myStream = config.myStream;
     this.rtcConfig = config.rtcConfig;
     this.ignoreNonTurn = config.ignoreNonTurn;
@@ -206,7 +186,7 @@ var WebRtcPhone = function () {
 
   _createClass(WebRtcPhone, [{
     key: "callUser",
-    value: function callUser(user, _ref) {
+    value: function callUser(userUuid, _ref) {
       var _this2 = this;
 
       var onPeerStream = _ref.onPeerStream,
@@ -241,7 +221,7 @@ var WebRtcPhone = function () {
           return;
         }
 
-        onIceCandidate(iceEvent, user, peerConnection, callId, _this2.pubnub);
+        onIceCandidate(iceEvent, userUuid, peerConnection, callId, _this2.pubnub);
       };
 
       peerConnection.onnegotiationneeded = function () {
@@ -249,7 +229,7 @@ var WebRtcPhone = function () {
           localDescription = description;
           return peerConnection.setLocalDescription(localDescription);
         }).then(function () {
-          var channel = [incomingCallEvent, user].join('.');
+          var channel = [incomingCallEvent, userUuid].join('.');
 
           _this2.pubnub.publish({
             channel: channel,
@@ -391,16 +371,16 @@ function incomingCall(_ref3) {
   this.onIncomingCall(sender, callResponseCallback);
 }
 
-function onIceCandidate(iceEvent, user, peerConnection, callId, pubnub) {
+function onIceCandidate(iceEvent, userUuid, peerConnection, callId, pubnub) {
   peerConnection.iceCache.push(iceEvent.candidate);
 
   if (peerConnection.acceptedCall) {
-    sendIceCandidates(user, peerConnection, callId, pubnub);
+    sendIceCandidates(userUuid, peerConnection, callId, pubnub);
   }
 }
 
-function sendIceCandidates(user, peerConnection, callId, pubnub) {
-  var channel = [peerIceCandidateEvent, user].join('.');
+function sendIceCandidates(userUuid, peerConnection, callId, pubnub) {
+  var channel = [peerIceCandidateEvent, userUuid].join('.');
   pubnub.publish({
     channel: channel,
     message: {
@@ -440,4 +420,4 @@ function peerIceCandidate(payload) {
 
 window.WebRtcPhone = WebRtcPhone;
 
-},{"./helpers/error-handlers.js":1,"./helpers/util.js":2}]},{},[3]);
+},{"./helpers/util.js":1}]},{},[2]);
