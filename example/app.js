@@ -30,6 +30,8 @@ const submit = document.getElementById('submit');
 
 const hide = 'hide';
 let webRTC;
+let pubnub;
+const globalChannel = 'global-channel';
 
 // An RTCConfiguration dictionary from the browser WebRTC API
 // Add STUN and TURN server information here for WebRTC calling
@@ -81,8 +83,7 @@ closeVideoButton.addEventListener('click', (event) => {
     videoModal.classList.add(hide);
     chatInterface.classList.remove(hide);
     clearTimeout(noVideoTimeout);
-    // ChatEngine.me.webRTC.disconnect();
-    webRTC.disconnect();
+    webRTC.disconnect(); // disconnects the current phone call
 });
 
 const initWebRtcApp = () => {
@@ -186,16 +187,18 @@ const initWebRtcApp = () => {
         if (div) div.remove();
     };
 
-let pubnub;
-
-const globalChannel = 'global-channel';
-
     pubnub = new PubNub({
         publishKey : 'pub-c-f2238dd7-3f40-4ab9-909d-7a0930ef5dab',
         subscribeKey : 'sub-c-6bd35c4a-808c-11e8-b3dc-56529179b978'
     });
 
     pubnub.addListener({
+        message: function(event) {
+            // Render a global chat message in the UI
+            if (event.channel === globalChannel) {
+                renderMessage(event);
+            }
+        },
         status: function(statusEvent) {
             if (statusEvent.category === "PNConnectedCategory") {
                 pubnub.setState({
@@ -361,17 +364,20 @@ function createUserListItem(userId, name) {
     return div;
 }
 
-function createMessageHTML(message) {
-    const text = message.data.text;
-    const user = message.sender.state.username;
-    const jsTime = parseInt(message.timetoken.substring(0,13));
+function createMessageHTML(messageEvent) {
+    const text = messageEvent.message.text;
+    const jsTime = parseInt(messageEvent.timetoken.substring(0,13));
     const dateString = new Date(jsTime).toLocaleString();
+    const senderUuid = messageEvent.publisher;
+    const senderName = senderUuid === pubnub.getUUID()
+        ? username
+        : document.getElementById(senderUuid).children[1].innerText;
 
     const div = document.createElement('div');
     const b = document.createElement('b');
 
-    div.id = message.timetoken;
-    b.innerHTML = `${user} (${dateString}): `;
+    div.id = messageEvent.timetoken;
+    b.innerHTML = `${senderName} (${dateString}): `;
 
     div.appendChild(b);
     div.innerHTML += text;
@@ -388,24 +394,15 @@ function sendMessage() {
     const trimmed = messageToSend.replace(/(\s)/g, '');
 
     if (trimmed.length > 0) {
-        // ChatEngine.global.emit('message', {
-        //     text: messageToSend
-        // });
+        pubnub.publish({
+            channel: globalChannel,
+            message: {
+                text: messageToSend
+            }
+        });
     }
 
     messageInput.value = '';
-}
-
-// Makes a new, version 4, universally unique identifier (UUID). Written by
-//     Stack Overflow user broofa
-//     (https://stackoverflow.com/users/109538/broofa) in this post
-//     (https://stackoverflow.com/a/2117523/6193736).
-function newUuid() {
-    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(
-        /[018]/g,
-        (c) => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4)
-            .toString(16)
-    );
 }
 
 // Sorts sibling HTML elements based on an attribute value
