@@ -27,31 +27,33 @@ const chat = document.getElementById('chat');
 const log = document.getElementById('log');
 const messageInput = document.getElementById('message-input');
 const submit = document.getElementById('submit');
-
 const hide = 'hide';
-let webRTC;
-let pubnub;
+
+// PubNub Channel for sending/receiving global chat messages
+//     also used for user presence with PubNub Presence
 const globalChannel = 'global-channel';
+let webRtcPhone;
+let pubnub;
 
 // An RTCConfiguration dictionary from the browser WebRTC API
 // Add STUN and TURN server information here for WebRTC calling
 const rtcConfig = {};
 
-let username; // local user name
-let localStream; // Local audio and video stream
-let noVideoTimeout; // Used for checking if video connection succeeded
+let username; // User's name in the app
+let myAudioVideoStream; // Local audio and video stream
+let noVideoTimeout; // Used for checking if a video connection succeeded
 
 // Xirsys API Info, not required for WebRTC, but it helps
+// Xirsys Network access tokens are issued via this PubNub Function
 const turnApiUrl = 'https://pubsub.pubnub.com/v1/blocks/sub-key/sub-c-7c977f32-a1b3-11e8-bc5d-ae80c5ea0c92/turn-credentials';
 let turnToken;
 request(turnApiUrl, 'GET').then((response) => { turnToken = response });
 
-
 // Init the audio and video stream on this client
-getLocalStream().then((myStream) => {
-    localStream = myStream;
-    myVideoSample.srcObject = localStream;
-    myVideo.srcObject = localStream;
+getLocalStream().then((localMediaStream) => {
+    myAudioVideoStream = localMediaStream;
+    myVideoSample.srcObject = myAudioVideoStream;
+    myVideo.srcObject = myAudioVideoStream;
 }).catch(() => {
     myVideo.classList.add(hide);
     myVideoSample.classList.add(hide);
@@ -59,14 +61,14 @@ getLocalStream().then((myStream) => {
     brokenSampleVideo.classList.remove(hide);
 });
 
-// Prompt user for a username input
+// Prompt the user for a username input
 getLocalUserName().then((myUsername) => {
     username = myUsername;
     usernameModal.classList.add(hide);
     initWebRtcApp();
 });
 
-// Send a message when Enter key is pressed
+// Send a chat message when Enter key is pressed
 messageInput.addEventListener('keydown', (event) => {
     if (event.keyCode === 13 && !event.shiftKey) {
         event.preventDefault();
@@ -75,7 +77,7 @@ messageInput.addEventListener('keydown', (event) => {
     }
 });
 
-// Send a message when the submit button is clicked
+// Send a chat message when the submit button is clicked
 submit.addEventListener('click', sendMessage);
 
 // Register a disconnect event handler when the close video button is clicked
@@ -83,25 +85,25 @@ closeVideoButton.addEventListener('click', (event) => {
     videoModal.classList.add(hide);
     chatInterface.classList.remove(hide);
     clearTimeout(noVideoTimeout);
-    webRTC.disconnect(); // disconnects the current phone call
+    webRtcPhone.disconnect(); // disconnects the current phone call
 });
 
 const initWebRtcApp = () => {
-
+    // WebRTC phone object event for when the remote peer's video becomes available.
     const onPeerStream = (webRTCTrackEvent) => {
-        console.log('Peer a/v stream now available');
+        console.log('Peer audio/video stream now available');
         const peerStream = webRTCTrackEvent.streams[0];
         window.peerStream = peerStream;
         remoteVideo.srcObject = peerStream;
     };
 
+    // WebRTC phone object event for when a remote peer attempts to call you.
     const onIncomingCall = (fromUuid, callResponseCallback) => {
         let username = document.getElementById(fromUuid).children[1].innerText;
         incomingCall(username).then((acceptedCall) => {
             if (acceptedCall) {
                 // End an already open call before opening a new one
-                // ChatEngine.me.webRTC.disconnect();
-                webRTC.disconnect();
+                webRtcPhone.disconnect();
                 videoModal.classList.remove(hide);
                 chatInterface.classList.add(hide);
                 noVideoTimeout = setTimeout(noVideo, 5000);
@@ -111,6 +113,7 @@ const initWebRtcApp = () => {
         });
     };
 
+    // WebRTC phone object event for when the remote peer responds to your call request.
     const onCallResponse = (acceptedCall) => {
         console.log('Call response: ', acceptedCall ? 'accepted' : 'rejected');
         if (acceptedCall) {
@@ -120,6 +123,7 @@ const initWebRtcApp = () => {
         }
     };
 
+    // WebRTC phone object event for when a call disconnects or timeouts.
     const onDisconnect = () => {
         console.log('Call disconnected');
         videoModal.classList.add(hide);
@@ -127,24 +131,15 @@ const initWebRtcApp = () => {
         clearTimeout(noVideoTimeout);
     };
 
-    // add the WebRTC plugin
-    let config = {
-        rtcConfig,
-        ignoreNonTurn: false,
-        myStream: localStream,
-        onPeerStream,
-        onIncomingCall,
-        onCallResponse,
-        onDisconnect
-    };
-
-    const joinHandler = (occupant) => {
+    // Lists the online users in the UI and registers a call method to the click event
+    //     When a user clicks a peer's name in the online list, the app calls that user.
+    const addToOnlineUserList = (occupant) => {
         const userId = occupant.uuid;
         const name = occupant.state ? occupant.state.name : null;
 
         if (!name) return;
 
-        const userListDomNode = createUserListItem(userId, name);
+        const userListDomElement = createUserListItem(userId, name);
 
         const alreadyInList = document.getElementById(userId);
         const isMe = pubnub.getUUID() === userId;
@@ -157,9 +152,9 @@ const initWebRtcApp = () => {
             return;
         }
 
-        onlineList.appendChild(userListDomNode);
+        onlineList.appendChild(userListDomElement);
 
-        userListDomNode.addEventListener('click', (event) => {
+        userListDomElement.addEventListener('click', (event) => {
             const userToCall = userId;
 
             confirmCall(name).then((yesDoCall) => {
@@ -170,11 +165,8 @@ const initWebRtcApp = () => {
                         'headers': { 'tok': turnToken }
                     }).then((response) => {
                         rtcConfig.iceServers = [response];
-                        // ChatEngine.me.webRTC.callUser(userToCall, {
-                        //     myStream: localStream
-                        // });
-                        webRTC.callUser(userToCall, {
-                            myStream: localStream
+                        webRtcPhone.callUser(userToCall, {
+                            myStream: myAudioVideoStream
                         });
                     });
                 }
@@ -203,7 +195,7 @@ const initWebRtcApp = () => {
             if (statusEvent.category === "PNConnectedCategory") {
                 pubnub.setState({
                     state: {
-                        "name" : username
+                        name: username
                     },
                     channels: [globalChannel],
                     uuid: pubnub.getUUID()
@@ -216,7 +208,7 @@ const initWebRtcApp = () => {
                 },
                 (status, response) => {
                     response.channels[globalChannel].occupants
-                        .forEach(joinHandler);
+                        .forEach(addToOnlineUserList);
                 });
             }
         },
@@ -225,9 +217,9 @@ const initWebRtcApp = () => {
                 console.error(status.error);
             } else if (status.channel === globalChannel) {
                 if (status.action === "join") {
-                    joinHandler(status, response);
+                    addToOnlineUserList(status, response);
                 } else if (status.action === "state-change") {
-                    joinHandler(status, response);
+                    addToOnlineUserList(status, response);
                 } else if (status.action === "leave") {
                     removeFromOnlineUserList(status.uuid);
                 } else if (status.action === "timeout") {
@@ -251,7 +243,19 @@ const initWebRtcApp = () => {
         });
     };
 
-    webRTC = new WebRtcPhone(config, pubnub);
+    // WebRTC phone object configuration.
+    let config = {
+        rtcConfig,
+        ignoreNonTurn: false,
+        myStream: myAudioVideoStream,
+        onPeerStream,   // is required
+        onIncomingCall, // is required
+        onCallResponse, // is required
+        onDisconnect,   // is required
+        pubnub          // is required
+    };
+
+    webRtcPhone = new WebRtcPhone(config);
 };
 
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -262,7 +266,7 @@ function renderMessage(message) {
 
     log.append(messageDomNode);
 
-    // Sort messages in chat log based on their timetoken
+    // Sort messages in chat log based on their timetoken (value of DOM id)
     sortNodeChildren(log, 'id');
 
     chat.scrollTop = chat.scrollHeight;

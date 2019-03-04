@@ -159,18 +159,18 @@ var peerIceCandidateEvent = _util.eventNames.peerIceCandidateEvent;
 var config;
 
 var WebRtcPhone = function () {
-  function WebRtcPhone(config, pubnubInstance) {
+  function WebRtcPhone(config) {
     var _this = this;
 
     _classCallCheck(this, WebRtcPhone);
 
-    if (!pubnubInstance) {
-      var message = "WebRTC [".concat(functionName, "] error. ") + 'Cannot initialize without passing a PubNub SDK instance object';
+    if (!config.pubnub) {
+      var message = "WebRTC [constructor] error. " + 'Cannot initialize without passing a PubNub SDK instance object';
       console.error(message);
       return;
     }
 
-    this.pubnub = pubnubInstance;
+    this.pubnub = config.pubnub;
     this.onIncomingCall = config.onIncomingCall || _errorHandlers.onIncomingCallNotDefined;
     this.onCallResponse = config.onCallResponse || _errorHandlers.onCallResponseNotDefined;
     this.onPeerStream = config.onPeerStream || _errorHandlers.onPeerStreamNotDefined;
@@ -179,7 +179,7 @@ var WebRtcPhone = function () {
     this.rtcConfig = config.rtcConfig;
     this.ignoreNonTurn = config.ignoreNonTurn;
     var myUuid = this.pubnub.getUUID();
-    pubnubInstance.addListener({
+    this.pubnub.addListener({
       message: function message(event) {
         var channel = event.channel;
         var isIncomingCall = channel.includes(incomingCallEvent);
@@ -323,8 +323,8 @@ function incomingCall(_ref3) {
 
     if (acceptedCall) {
       if (_typeof(myStream) !== 'object') {
-        var _functionName = 'incomingCall';
-        var message = "WebRTC [".concat(_functionName, "]:") + "No local video stream defined.";
+        var functionName = 'incomingCall';
+        var message = "WebRTC [".concat(functionName, "]:") + "No local video stream defined.";
         console.error(message);
       }
 

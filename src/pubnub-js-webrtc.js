@@ -74,15 +74,15 @@ class WebRtcPhone {
      *
      * @returns {void}
      */
-    constructor(config, pubnubInstance) {
-        if (!pubnubInstance) {
-            const message = `WebRTC [${functionName}] error. ` +
+    constructor(config) {
+        if (!config.pubnub) {
+            const message = `WebRTC [constructor] error. ` +
                 'Cannot initialize without passing a PubNub SDK instance object';
             console.error(message);
             return;
         }
 
-        this.pubnub = pubnubInstance; // this.pubnub.getUUID();
+        this.pubnub = config.pubnub; // this.pubnub.getUUID();
         this.onIncomingCall = config.onIncomingCall || onIncomingCallNotDefined;
         this.onCallResponse = config.onCallResponse || onCallResponseNotDefined;
         this.onPeerStream = config.onPeerStream || onPeerStreamNotDefined;
@@ -96,7 +96,7 @@ class WebRtcPhone {
         //     incoming call requests
         //     call responses
         //     receiving new peer ICE candidates
-        pubnubInstance.addListener({
+        this.pubnub.addListener({
             message: (event) => {
                 const channel = event.channel;
                 const isIncomingCall = channel.includes(incomingCallEvent);
