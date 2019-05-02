@@ -1,6 +1,7 @@
 /**
- * @file ChatEngine plugin for WebRTC video and audio calling.
- * @author Adam Bavosa <ajb413>
+ * @file Wrapper for the PubNub JS SDK that simplifies WebRTC video and audio
+ *     calling.
+ * @author Adam Bavosa <@ajb413>
  */
 
 import {
@@ -16,27 +17,30 @@ const callResponseEvent = ['$' + 'webRTC', 'callResponse'].join('.');
  * @class
  * @classdesc WebRtcPhone uses PubNub to make WebRTC audio and or video calls.
  *     It must be initialized with 4 event handlers and a PubNub JS SDK 
- *     object instance. It works with 1 to 1 calls over STUN or TURN. It
+ *     instance. It works with 1 to 1 calls over STUN or TURN. It
  *     provides 2 public methods. One for calling a user, and one for 
  *     disconnecting from a call.
  */
 class WebRtcPhone {
     /*
-     * The `constructor` is a method called when initializing a instance of the 
-     *     class. A `config` object must be provided to the constructor.
+     * The `constructor` is a method called when initializing an instance of 
+     *     the class. A `config` object must be provided to the constructor. 
+     *     The parameters documented for the constructor are members of the 
+     *     `config` object.
      *
+     * @param {object} config
      * @param {object} [pubnub] Instance object of the PubNub JavaScript SDK.
-     *     PubNub pub/sub API handles all signaling for WebRTC calls.
+     *     PubNub pub/sub API handles all "signaling" for WebRTC calls.
      * @param {function} [onIncomingCall] Function passed from the parent that
      *     executes when an `incomingCallEvent` event fires for an incoming
      *     WebRTC call. If a handler is not passed in the `config`, the object 
      *     initialization will fail.
      * @param {function} [onCallResponse] Function passed from the parent that
      *     executes when a `callResponseEvent` event fires. This is when the 
-     *     peer replies with their response to a call request. If a handler is 
-     *     not passed in the `config`, the object initialization will fail.
+     *     peer replies to a call request. If a handler is  not passed in the 
+     *     `config`, the object initialization will fail.
      * @param {function} [onPeerStream] Function passed from the parent that
-     *     executes when a the peer's stream object becomes available. If a
+     *     executes when the peer's stream object becomes available. If a
      *     handler is not passed in the `config`, the object initialization 
      *     will fail.
      * @param {function} [onDisconnect] Function passed from the parent that
@@ -106,22 +110,22 @@ class WebRtcPhone {
 
     /*
      * Initialize a WebRTC call with another user in the app that is online.
-     *     This is called from parent.
+     *     This is called from the parent.
      *
      * @param {string} userUuid PubNub UUID of the user in which this client is 
      *     attempting to call.
      * @param {object} object
      * @param {function} object.onPeerStream Event handler for when a peer's
      *     stream becomes available. This will overwrite a handler that was
-     *     passed on initialization.
+     *     passed during initialization.
      * @param {object} object.myStream A browser `MediaStream` object of the
      *     local client audio and/or video. This will overwrite a stream that
-     *     was passed on initialization.
+     *     was passed during initialization.
      * @param {object} object.offerOptions An `RTCOfferOptions` dictionary that
      *     specifies audio and/or video for the peer connection offer.
      * @param {object} object.rtcConfig An `RTCConfiguration` dictionary that is
      *     used to initialize the `RTCPeerConnection`. This will overwrite an
-     *     `rtcConfig` that was passed on initialization.
+     *     `rtcConfig` that was passed during initialization.
      *
      * @returns {void}
      */
@@ -183,7 +187,7 @@ class WebRtcPhone {
     }
 
     /*
-     * Gracefully closes the currently open WebRTC call. This is called from
+     * Gracefully closes a currently open WebRTC call. This is called from the 
      *     parent.
      *
      * @returns {void}
@@ -241,7 +245,7 @@ function callResponse({ sender, callId, acceptedCall, remoteDescription }) {
  * @param {string} sender PubNub UUID of the user that sent the message.
  * @param {string} callId UUID of the call.
  * @param {Object} rtcConfig An `RTCConfiguration` dictionary that is 
- *     usedto initialize the `RTCPeerConnection`. This is where STUN and 
+ *     used to initialize the `RTCPeerConnection`. This is where STUN and 
  *     TURN server information should be provided.
  * @param {string} remoteDescription The local description of the sender for 
  *     the WebRTC call.

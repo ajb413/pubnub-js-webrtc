@@ -1,5 +1,5 @@
 {
-  "author": "Adam Bavosa <ajb413>",
+  "author": "Adam Bavosa <@ajb413>",
   "name": "pubnub-js-webrtc",
   "version": "0.0.1",
   "main": "src/plugin.js",

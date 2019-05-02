@@ -1,6 +1,6 @@
 /**
  * @file Utility functions for the PubNub powered WebRTC Phone.
- * @author Adam Bavosa <ajb413>
+ * @author Adam Bavosa <@ajb413>
  */
 
 /**

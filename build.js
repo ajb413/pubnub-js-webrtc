@@ -7,5 +7,5 @@ browserify({
     }).transform(babelify)
     .require("./src/pubnub-js-webrtc.js", { entry: true })
     .bundle()
-    .on("error", function (err) { console.log("Error: " + err.message); })
+    .on("error", function (err) { console.error("Error: " + err.message); })
     .pipe(fs.createWriteStream("./dist/pubnub-js-webrtc.js"));
