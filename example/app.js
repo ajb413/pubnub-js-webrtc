@@ -247,7 +247,7 @@ const initWebRtcApp = () => {
     // WebRTC phone object configuration.
     let config = {
         rtcConfig,
-        ignoreNonTurn: false,
+        ignoreNonTurn: true,
         myStream: myAudioVideoStream,
         onPeerStream,   // is required
         onIncomingCall, // is required
