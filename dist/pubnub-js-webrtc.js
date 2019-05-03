@@ -142,6 +142,7 @@ function _createClass(Constructor, protoProps, staticProps) {
 var peerIceCandidateEvent = ['$' + 'webRTC', 'peerIceCandidate'].join('.');
 var incomingCallEvent = ['$' + 'webRTC', 'incomingCall'].join('.');
 var callResponseEvent = ['$' + 'webRTC', 'callResponse'].join('.');
+var isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
 
 var WebRtcPhone = function () {
   function WebRtcPhone(config) {
@@ -226,7 +227,12 @@ var WebRtcPhone = function () {
 
       peerConnection.onnegotiationneeded = function () {
         peerConnection.createOffer(offerOptions).then(function (description) {
-          localDescription = localDescription || description;
+          if (isChrome) {
+            localDescription = localDescription || description;
+          } else {
+            localDescription = description;
+          }
+
           return peerConnection.setLocalDescription(localDescription);
         }).then(function () {
           var channel = [incomingCallEvent, userUuid].join('.');

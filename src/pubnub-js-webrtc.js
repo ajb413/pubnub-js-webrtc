@@ -13,6 +13,8 @@ const peerIceCandidateEvent = ['$' + 'webRTC', 'peerIceCandidate'].join('.');
 const incomingCallEvent = ['$' + 'webRTC', 'incomingCall'].join('.');
 const callResponseEvent = ['$' + 'webRTC', 'callResponse'].join('.');
 
+const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+
 /*
  * @class
  * @classdesc WebRtcPhone uses PubNub to make WebRTC audio and or video calls.
@@ -165,7 +167,11 @@ class WebRtcPhone {
         peerConnection.onnegotiationneeded = () => {
             peerConnection.createOffer(offerOptions)
             .then((description) => {
-                localDescription = localDescription || description;
+                if (isChrome) {
+                    localDescription = localDescription || description;
+                } else {
+                    localDescription = description;
+                }
                 return peerConnection.setLocalDescription(localDescription);
             }).then(() => {
                 const channel = [incomingCallEvent, userUuid].join('.');
