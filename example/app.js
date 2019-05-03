@@ -164,7 +164,8 @@ const initWebRtcApp = () => {
                     request(turnApiUrl, 'PUT', {
                         'headers': { 'tok': turnToken }
                     }).then((response) => {
-                        rtcConfig.iceServers = [response];
+                        // rtcConfig.iceServers = [response];
+                        rtcConfig.iceServers = [{urls: "stun:stun.l.google.com:19302"}];
                         webRtcPhone.callUser(userToCall, {
                             myStream: myAudioVideoStream
                         });
@@ -184,6 +185,7 @@ const initWebRtcApp = () => {
         subscribeKey : 'sub-c-6bd35c4a-808c-11e8-b3dc-56529179b978'
     });
 
+    // This PubNub listener powers the text chat and online user list population.
     pubnub.addListener({
         message: function(event) {
             // Render a global chat message in the UI

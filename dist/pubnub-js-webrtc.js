@@ -201,7 +201,7 @@ var WebRtcPhone = function () {
         offerToReceiveAudio: 1,
         offerToReceiveVideo: 1
       };
-      var peerConnection = this.peerConnection = new RTCPeerConnection(rtcConfig);
+      var peerConnection = this.peerConnection = new RTCPeerConnection();
       var callId = this.callId = (0, _util.newUuid)();
       var localDescription;
       peerConnection.ontrack = onPeerStream;
@@ -226,7 +226,8 @@ var WebRtcPhone = function () {
 
       peerConnection.onnegotiationneeded = function () {
         peerConnection.createOffer(offerOptions).then(function (description) {
-          localDescription = description;
+          localDescription = localDescription || description;
+          console.log(localDescription.sdp);
           return peerConnection.setLocalDescription(localDescription);
         }).then(function () {
           var channel = [incomingCallEvent, userUuid].join('.');

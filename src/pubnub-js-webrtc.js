@@ -139,7 +139,7 @@ class WebRtcPhone {
             offerToReceiveVideo: 1
         };
         const peerConnection = this.peerConnection
-            = new RTCPeerConnection(rtcConfig);
+            = new RTCPeerConnection();
         const callId = this.callId = newUuid(); // Call ID
         let localDescription; // WebRTC local description
         peerConnection.ontrack = onPeerStream;
@@ -165,7 +165,8 @@ class WebRtcPhone {
         peerConnection.onnegotiationneeded = () => {
             peerConnection.createOffer(offerOptions)
             .then((description) => {
-                localDescription = description;
+                localDescription = localDescription || description;
+                console.log(localDescription.sdp)
                 return peerConnection.setLocalDescription(localDescription);
             }).then(() => {
                 const channel = [incomingCallEvent, userUuid].join('.');
