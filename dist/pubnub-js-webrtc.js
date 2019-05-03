@@ -227,7 +227,6 @@ var WebRtcPhone = function () {
       peerConnection.onnegotiationneeded = function () {
         peerConnection.createOffer(offerOptions).then(function (description) {
           localDescription = localDescription || description;
-          console.log(localDescription.sdp);
           return peerConnection.setLocalDescription(localDescription);
         }).then(function () {
           var channel = [incomingCallEvent, userUuid].join('.');

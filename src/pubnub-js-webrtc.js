@@ -166,7 +166,6 @@ class WebRtcPhone {
             peerConnection.createOffer(offerOptions)
             .then((description) => {
                 localDescription = localDescription || description;
-                console.log(localDescription.sdp)
                 return peerConnection.setLocalDescription(localDescription);
             }).then(() => {
                 const channel = [incomingCallEvent, userUuid].join('.');
