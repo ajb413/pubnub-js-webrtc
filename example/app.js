@@ -28,6 +28,7 @@ const log = document.getElementById('log');
 const messageInput = document.getElementById('message-input');
 const submit = document.getElementById('submit');
 const hide = 'hide';
+const noVideoTimoutLengthMS = 15000;
 
 // PubNub Channel for sending/receiving global chat messages
 //     also used for user presence with PubNub Presence
@@ -91,10 +92,14 @@ closeVideoButton.addEventListener('click', (event) => {
 const initWebRtcApp = () => {
     // WebRTC phone object event for when the remote peer's video becomes available.
     const onPeerStream = (webRTCTrackEvent) => {
+        console.log('webRTCTrackEvent', webRTCTrackEvent);
         console.log('Peer audio/video stream now available');
-        const peerStream = webRTCTrackEvent.streams[0];
-        window.peerStream = peerStream;
-        remoteVideo.srcObject = peerStream;
+        console.log(JSON.stringify(webRTCTrackEvent));
+        if (remoteVideo.srcObject !== webRTCTrackEvent.streams[0]) {
+            const peerStream = webRTCTrackEvent.streams[0];
+            window.peerStream = peerStream;
+            remoteVideo.srcObject = peerStream;
+        }
     };
 
     // WebRTC phone object event for when a remote peer attempts to call you.
@@ -106,7 +111,7 @@ const initWebRtcApp = () => {
                 webRtcPhone.disconnect();
                 videoModal.classList.remove(hide);
                 chatInterface.classList.add(hide);
-                noVideoTimeout = setTimeout(noVideo, 5000);
+                noVideoTimeout = setTimeout(noVideo, noVideoTimoutLengthMS);
             }
 
             callResponseCallback({ acceptedCall });
@@ -119,7 +124,7 @@ const initWebRtcApp = () => {
         if (acceptedCall) {
             videoModal.classList.remove(hide);
             chatInterface.classList.add(hide);
-            noVideoTimeout = setTimeout(noVideo, 5000);
+            noVideoTimeout = setTimeout(noVideo, noVideoTimoutLengthMS);
         }
     };
 
