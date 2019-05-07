@@ -82,12 +82,14 @@ messageInput.addEventListener('keydown', (event) => {
 submit.addEventListener('click', sendMessage);
 
 // Register a disconnect event handler when the close video button is clicked
-closeVideoButton.addEventListener('click', (event) => {
+closeVideoButton.addEventListener('click', closeVideoEventHandler);
+
+const closeVideoEventHandler = (event) => {
     videoModal.classList.add(hide);
     chatInterface.classList.remove(hide);
     clearTimeout(noVideoTimeout);
     webRtcPhone.disconnect(); // disconnects the current phone call
-});
+}
 
 const initWebRtcApp = () => {
     // WebRTC phone object event for when the remote peer's video becomes available.
@@ -429,6 +431,7 @@ function noVideo() {
 
     if (remoteVideo.paused) {
         alert(message);
+        closeVideoEventHandler();
     }
 }
 
