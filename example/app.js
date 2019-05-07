@@ -28,7 +28,6 @@ const log = document.getElementById('log');
 const messageInput = document.getElementById('message-input');
 const submit = document.getElementById('submit');
 const hide = 'hide';
-const noVideoTimoutLengthMS = 15000;
 
 // PubNub Channel for sending/receiving global chat messages
 //     also used for user presence with PubNub Presence
@@ -43,6 +42,7 @@ const rtcConfig = {};
 let username; // User's name in the app
 let myAudioVideoStream; // Local audio and video stream
 let noVideoTimeout; // Used for checking if a video connection succeeded
+const noVideoTimeoutMS = 5000; // Error alert if the video fails to connect
 
 // Xirsys API Info, not required for WebRTC, but it helps
 // Xirsys Network access tokens are issued via this PubNub Function
@@ -92,14 +92,10 @@ closeVideoButton.addEventListener('click', (event) => {
 const initWebRtcApp = () => {
     // WebRTC phone object event for when the remote peer's video becomes available.
     const onPeerStream = (webRTCTrackEvent) => {
-        console.log('webRTCTrackEvent', webRTCTrackEvent);
         console.log('Peer audio/video stream now available');
-        console.log(JSON.stringify(webRTCTrackEvent));
-        if (remoteVideo.srcObject !== webRTCTrackEvent.streams[0]) {
-            const peerStream = webRTCTrackEvent.streams[0];
-            window.peerStream = peerStream;
-            remoteVideo.srcObject = peerStream;
-        }
+        const peerStream = webRTCTrackEvent.streams[0];
+        window.peerStream = peerStream;
+        remoteVideo.srcObject = peerStream;
     };
 
     // WebRTC phone object event for when a remote peer attempts to call you.
@@ -111,7 +107,7 @@ const initWebRtcApp = () => {
                 webRtcPhone.disconnect();
                 videoModal.classList.remove(hide);
                 chatInterface.classList.add(hide);
-                noVideoTimeout = setTimeout(noVideo, noVideoTimoutLengthMS);
+                noVideoTimeout = setTimeout(noVideo, noVideoTimeoutMS);
             }
 
             callResponseCallback({ acceptedCall });
@@ -124,7 +120,7 @@ const initWebRtcApp = () => {
         if (acceptedCall) {
             videoModal.classList.remove(hide);
             chatInterface.classList.add(hide);
-            noVideoTimeout = setTimeout(noVideo, noVideoTimoutLengthMS);
+            noVideoTimeout = setTimeout(noVideo, noVideoTimeoutMS);
         }
     };
 
