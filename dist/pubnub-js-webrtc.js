@@ -202,7 +202,7 @@ var WebRtcPhone = function () {
         offerToReceiveAudio: 1,
         offerToReceiveVideo: 1
       };
-      var peerConnection = this.peerConnection = new RTCPeerConnection();
+      var peerConnection = this.peerConnection = new RTCPeerConnection(rtcConfig);
       var callId = this.callId = (0, _util.newUuid)();
       var localDescription;
       peerConnection.ontrack = onPeerStream;

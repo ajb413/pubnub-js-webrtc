@@ -141,7 +141,7 @@ class WebRtcPhone {
             offerToReceiveVideo: 1
         };
         const peerConnection = this.peerConnection
-            = new RTCPeerConnection();
+            = new RTCPeerConnection(rtcConfig);
         const callId = this.callId = newUuid(); // Call ID
         let localDescription; // WebRTC local description
         peerConnection.ontrack = onPeerStream;
