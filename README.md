@@ -8,7 +8,7 @@ For education on WebRTC, and also a how-to for making your own app with this rep
 - link to blog 1
 - link to blog 2
 
-Initialization of the WebRTC Phone
+## Initialization of the WebRTC Phone
 ```js
 let pubnub = new PubNub({
     publishKey: 'your-publish-api-key-here',
@@ -32,7 +32,7 @@ let config = {
 webRtcPhone = new WebRtcPhone(config);
 ```
 
-Items that are provided to the `WebRtcPhone` constructor via the `config` object
+## Items that are provided to the `WebRtcPhone` constructor via the `config` object
 ```js
 // Standard WebRTC constructor config parameter (this data is for example purposes and will not work)
 let rtcConfig = {
@@ -84,14 +84,14 @@ const onDisconnect = () => {
 };
 ```
 
-Send a call request to another user
+## Send a call request to another user
 ```js
 webRtcPhone.callUser("Alice", {
     myStream: myAudioVideoStream // Get this stream with `navigator.mediaDevices.getUserMedia()`
 });
 ```
 
-# Frequently Asked Questions (FAQ) about the PubNub JS WebRTC Package
+## Frequently Asked Questions (FAQ) about the PubNub JS WebRTC Package
 
 ### What is WebRTC?
 WebRTC is a free and open source project that enables web browsers and mobile devices to provide a simple real-time communication API. Please read this [PubNub blog](https://www.pubnub.com/blog/) to learn more about WebRTC and how to implement the code in this repository.
