@@ -1,6 +1,6 @@
 # JavaScript WebRTC Video Chat Package with PubNub
 
-Adds the ability to do 1-to-1 WebRTC audio/video calls with PubNub. The PubNub key set must have PubNub Presence enabled. The example folder app uses Xirsys to get TURN server access via a PubNub Function.
+Adds the ability to do 1-to-1 WebRTC audio/video calls with [PubNub](https://www.pubnub.com/?devrel_gh=pubnub-js-webrtc). The PubNub key set must have PubNub Presence enabled. The example folder app uses Xirsys to get TURN server access via a PubNub Function.
 
 [![WebRTC with PubNub Chat in JavaScript Screenshot](https://i.imgur.com/X0YULf5.png)](https://adambavosa.com/pubnub-js-webrtc/example/)
 
@@ -94,10 +94,10 @@ webRtcPhone.callUser("Alice", {
 ## Frequently Asked Questions (FAQ) about the PubNub JS WebRTC Package
 
 ### What is WebRTC?
-WebRTC is a free and open source project that enables web browsers and mobile devices to provide a simple real-time communication API. Please read this [PubNub blog](https://www.pubnub.com/blog/) to learn more about WebRTC and how to implement the code in this repository.
+WebRTC is a free and open source project that enables web browsers and mobile devices to provide a simple real-time communication API. Please read this [PubNub blog](https://www.pubnub.com/blog/?devrel_gh=pubnub-js-webrtc) to learn more about WebRTC and how to implement the code in this repository.
 
 ### What is PubNub? Why is PubNub relevant to WebRTC?
-[PubNub](https://www.pubnub.com/) is a global Data Stream Network (DSN) and realtime network-as-a-service. PubNub's primary product is a realtime publish/subscribe messaging API built on a global data stream network which is made up of a replicated network with multiple points of presence around the world.
+[PubNub](https://www.pubnub.com/?devrel_gh=pubnub-js-webrtc) is a global Data Stream Network (DSN) and realtime network-as-a-service. PubNub's primary product is a realtime publish/subscribe messaging API built on a global data stream network which is made up of a replicated network with multiple points of presence around the world.
 
 PubNub is a low cost, easy to use, infrastructure API that can be implemented rapidly as a WebRTC signaling service. The signaling service is responsible for delivering messages to WebRTC peer clients. See the next question for the specific signals that PubNub's publish/subscribe API handles.
 
