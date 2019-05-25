@@ -5,8 +5,8 @@ Adds the ability to do 1-to-1 WebRTC audio/video calls with [PubNub](https://www
 [![WebRTC with PubNub Chat in JavaScript Screenshot](https://i.imgur.com/X0YULf5.png)](https://adambavosa.com/pubnub-js-webrtc/example/)
 
 For education on WebRTC, and also a how-to for making your own app with this repository see these blog posts:
-- link to blog 1
-- link to blog 2
+- Part 1 [Integrating Video Calling In Chat With WebRTC And PubNub](https://www.pubnub.com/blog/integrating-video-calling-in-chat-with-webrtc-and-pubnub/)
+- Part 2 [Implement Video Chat With Xirsys, WebRTC, And PubNub](https://www.pubnub.com/blog/xirsys-webrtc-and-pubnub-video-chat/)
 
 ## Initialization of the WebRTC Phone
 ```js
