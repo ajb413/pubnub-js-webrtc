@@ -5,8 +5,8 @@ Adds the ability to do 1-to-1 WebRTC audio/video calls with [PubNub](https://www
 [![WebRTC with PubNub Chat in JavaScript Screenshot](https://i.imgur.com/X0YULf5.png)](https://adambavosa.com/pubnub-js-webrtc/example/)
 
 For education on WebRTC, and also a how-to for making your own app with this repository see these blog posts:
-- Part 1 [Integrating Video Calling In Chat With WebRTC And PubNub](https://www.pubnub.com/blog/integrating-video-calling-in-chat-with-webrtc-and-pubnub/)
-- Part 2 [Implement Video Chat With Xirsys, WebRTC, And PubNub](https://www.pubnub.com/blog/xirsys-webrtc-and-pubnub-video-chat/)
+- Part 1 [Integrating Video Calling In Chat With WebRTC And PubNub](https://www.pubnub.com/blog/integrating-video-calling-in-chat-with-webrtc-and-pubnub/?devrel_gh=pubnub-js-webrtc)
+- Part 2 [Implement Video Chat With Xirsys, WebRTC, And PubNub](https://www.pubnub.com/blog/xirsys-webrtc-and-pubnub-video-chat/?devrel_gh=pubnub-js-webrtc)
 
 ## Initialization of the WebRTC Phone
 ```js
@@ -94,7 +94,7 @@ webRtcPhone.callUser("Alice", {
 ## Frequently Asked Questions (FAQ) about the PubNub JS WebRTC Package
 
 ### What is WebRTC?
-WebRTC is a free and open source project that enables web browsers and mobile devices to provide a simple real-time communication API. Please read this [PubNub blog](https://www.pubnub.com/blog/?devrel_gh=pubnub-js-webrtc) to learn more about WebRTC and how to implement the code in this repository.
+WebRTC is a free and open source project that enables web browsers and mobile devices to provide a simple real-time communication API. Please read this [PubNub blog](https://www.pubnub.com/blog/integrating-video-calling-in-chat-with-webrtc-and-pubnub/?devrel_gh=pubnub-js-webrtc) to learn more about WebRTC and how to implement the code in this repository.
 
 ### What is PubNub? Why is PubNub relevant to WebRTC?
 [PubNub](https://www.pubnub.com/?devrel_gh=pubnub-js-webrtc) is a global Data Stream Network (DSN) and realtime network-as-a-service. PubNub's primary product is a realtime publish/subscribe messaging API built on a global data stream network which is made up of a replicated network with multiple points of presence around the world.
