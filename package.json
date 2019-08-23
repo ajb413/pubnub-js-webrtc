@@ -16,6 +16,11 @@
       ]
     ]
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ajb413/pubnub-js-webrtc.git"
+  },
+  "license": "MIT",
   "devDependencies": {
     "@babel/preset-env": "^7.3.4",
     "babel-core": "^7.0.0-0",
